@@ -5,6 +5,13 @@ A lightweight, dynamic argument parsing library for Python programs with klugy s
 I made this for a teaching machine project I'm working on (I needed a custom argument parser for _reasons_),
 and I'm always too impatient to use `argparse`.
 
+## Installation
+
+1. Clone the repo
+2. `cd` to the folder
+3. `pip install .`
+4. Write ridiculous software (i.e. pay it forward)
+
 ## Usage
 
 Check this out:
