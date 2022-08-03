@@ -24,6 +24,8 @@ def main():
   print(arglite.parser.b)
   print(arglite.parser.c)
 
+  arglite.parser.display()
+
 if __name__ == "__main__":
   main()
 ```
