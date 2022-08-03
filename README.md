@@ -21,7 +21,7 @@ if __name__ == "__main__":
   main()
 ```
 
-Run using `python main.py -a Yo -b that's -c`.
+Run using `python main.py -a Yo -b that is -c`.
 
 ## Notes
 
