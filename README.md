@@ -2,9 +2,12 @@
 
 A lightweight, dynamic argument parsing library for Python programs with klugy support for typing variables.
 
+I made this for a teaching machine project I'm working on (I needed a custom argument parser for _reasons_),
+and I'm always too impatient to use `argparse`.
+
 ## Usage
 
-Check this out, `main`:
+Check this out:
 
 ```python
 import arglite
@@ -18,7 +21,7 @@ if __name__ == "__main__":
   main()
 ```
 
-Run using `pyton main.py -a Yo -b that's -c`.
+Run using `python main.py -a Yo -b that's -c`.
 
 ## Notes
 
