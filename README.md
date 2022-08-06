@@ -7,10 +7,7 @@ and I'm always too impatient to use `argparse`.
 
 ## Installation
 
-1. Clone the repo
-2. `cd` to the folder
-3. `pip install .`
-4. Write ridiculous software (i.e. pay it forward)
+Find this tool on `PyPI`: `pip install arglite`
 
 ## Usage
 
