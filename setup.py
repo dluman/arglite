@@ -29,6 +29,7 @@ Check this out:
 
 import arglite
 
+```python
 def main():
   print(arglite.parser.a)
   print(arglite.parser.b)
@@ -38,8 +39,10 @@ def main():
 
 if __name__ == "__main__":
   main()
+```
+Run using:
 
-Run using: python main.py -a Yo --b that is -c.
+python main.py -a Yo --b that is -c.
 
 Notes
 =====
@@ -50,5 +53,6 @@ The module uses `ast.literal_eval`, so `"{'a':'b'}"` will convert to a `dict` (a
     long_description_content_type="text/x-rst",
     install_requires=[
       'rich',
-    ]
+    ],
+    url: "https://github.com/dluman/arglite"
  )

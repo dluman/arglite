@@ -11,6 +11,7 @@ from rich.markdown import Markdown
 class Parser:
 
   def __init__(self):
+    """ Entry point. """
     self.file = sys.argv[0]
     self.h, self.help = None, None
     arg_str = self.flatten(sys.argv[1:])
@@ -18,6 +19,7 @@ class Parser:
     self.set_vars()
 
   def __str__(self) -> str:
+    """ str representation """
     md = """
 
 arglite
@@ -37,12 +39,15 @@ Usage
     return md
 
   def flatten(self, args: list = []) -> str:
+    """ Flatten a list into a str """
     return " ".join(args)
 
   def pairs(self, args: str = "") -> list:
+    """ Get each pair of args and values, blanks if no value """
     return re.findall(r"-{1,2}([^-][a-z]*(?:\s)?)([^-]*)", args)
 
   def typify(self, val: Any) -> Any:
+    """ Cast as a data structure or other type if possible, else...meh """
     try:
       val = literal_eval(val)
     except:
@@ -50,12 +55,14 @@ Usage
     return val
 
   def set_help(self):
+    """ Set the help flag response """
     del self.h
     del self.help
     print(self.__str__())
     self.display()
 
   def set_vars(self) -> None:
+    """ Reflect each variable and value to instance """
     self.vars = []
     for arg, val in self.args:
       if not val: val = True
@@ -68,6 +75,7 @@ Usage
       self.set_help()
 
   def display(self) -> None:
+    """ Display a table of all of the args parsed """
     table = Table(title="CLI flags")
     table.add_column("Variable name")
     table.add_column("Variable value")
@@ -85,4 +93,5 @@ Usage
     if len(self.vars) > 0:
       console.print(table)
 
+""" Create a simple instanced variable to run on exec """
 parser = Parser()
