@@ -31,6 +31,5 @@ Run using `python main.py -a Yo --b that is -c`.
 
 ## Notes
 
-* No automatic `-h` flag yet; soon?
 * Flags with no value are automatically converted to `True` boolean
 * The module uses `ast.literal_eval`, so `"{'a':'b'}"` will convert to a `dict` (all quotes required)
