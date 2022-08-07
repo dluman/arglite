@@ -1,12 +1,18 @@
 import re
+import os
 import sys
 import inspect
+import importlib
 
 from typing import Any
 from ast import literal_eval
+
+from rich import print
 from rich.table import Table
 from rich.console import Console
 from rich.markdown import Markdown
+
+from .code import Code
 
 class Parser:
 
@@ -17,6 +23,16 @@ class Parser:
     arg_str = self.flatten(sys.argv[1:])
     self.args = self.pairs(arg_str)
     self.set_vars()
+    self.reflect()
+
+  def __getattribute__(self, name) -> Any:
+    """ Handle missing attributes and flags """
+    try:
+      attr = super().__getattribute__(name)
+      return attr
+    except AttributeError:
+      print(f"\n\t ❌ ERROR: The program expected {name}, but didn't get a flag value for {name}!\n")
+      sys.exit(1)
 
   def __str__(self) -> str:
     """ str representation """
@@ -74,6 +90,20 @@ Usage
     if self.h or self.help or len(self.vars) == 0:
       self.set_help()
 
+  def reflect(self) -> None:
+    """ Gather information about expected variables """
+    self.expected = []
+    file = os.path.abspath(
+      sys.argv[0]
+    )
+    code = Code(file)
+    exp = f"{code.name}(\.parser)?\.([a-z0-9_])"
+    regexp = re.compile(exp, re.I)
+    for line in code.source:
+      expected_vars = re.search(regexp, line)
+      if expected_vars:
+        self.expected.append(expected_vars.groups()[-1])
+
   def display(self) -> None:
     """ Display a table of all of the args parsed """
     table = Table(title="CLI flags")
@@ -92,6 +122,7 @@ Usage
     console = Console()
     if len(self.vars) > 0:
       console.print(table)
+
 
 """ Create a simple instanced variable to run on exec """
 parser = Parser()

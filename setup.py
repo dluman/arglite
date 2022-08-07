@@ -54,5 +54,5 @@ The module uses `ast.literal_eval`, so `"{'a':'b'}"` will convert to a `dict` (a
     install_requires=[
       'rich',
     ],
-    url: "https://github.com/dluman/arglite"
+    url="https://github.com/dluman/arglite"
  )
