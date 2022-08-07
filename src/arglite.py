@@ -31,7 +31,7 @@ class Parser:
       attr = super().__getattribute__(name)
       return attr
     except AttributeError:
-      print(f"❌ ERROR: The program expected {name}, but didn't get a flag value for {name}!")
+      print(f"✗ ERROR: The program expected {name}, but didn't get a flag value for {name}!")
 
   def __str__(self) -> str:
     """ str representation """
@@ -100,6 +100,7 @@ Usage
     regexp = re.compile(exp, re.I)
     for line in code.source:
       expected_vars = re.search(regexp, line)
+      print(code.check_status(line))
       if expected_vars:
         self.expected.append(expected_vars.groups()[-1])
 

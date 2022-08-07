@@ -2,6 +2,8 @@ import re
 import importlib
 import inspect
 
+from .argument import Argument
+
 class Code:
 
   def __init__(self, file):
@@ -12,7 +14,6 @@ class Code:
     self.source = self.inspect(contents)
     self.name = self.find_import()
     self.partial = self.check_partial()
-    self.checks = self.check_flags()
 
   def inspect(self, contents: str = "") -> list:
     """ Break the code into individual lines to scan """
@@ -38,6 +39,7 @@ class Code:
           return True
     return False
 
-  def check_flags(self):
-    """ Future feature for checking provided flags against existing """
-    pass
+  def check_status(self, expr: str = "") -> bool:
+    """ Check if a var is required or optional per invoking codebase """
+    arg = Argument(expr)
+    return arg.required()
