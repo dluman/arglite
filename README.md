@@ -17,9 +17,10 @@ Check this out:
 import arglite
 
 def main():
-  print(arglite.parser.a)
+  print(arglite.parser.required.a)
   print(arglite.parser.b)
-  print(arglite.parser.c)
+  print(arglite.parser.optional.c)
+  print(arglite.parser.optional.d)
 
   arglite.parser.display()
 

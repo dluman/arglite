@@ -40,8 +40,7 @@ class Parser:
       try:
         attr = getattr(self.required, name)
       except AttributeError:
-        print(f"✗ ERROR: The required a value for {name}, but didn't receive one!")
-
+        pass
 
   def __str__(self) -> str:
     """ str representation """
@@ -106,7 +105,7 @@ Usage
 
   def reflect(self) -> dict:
     """ Gather information about expected, required, and optional variables """
-    expected = {
+    self.expected = {
       "h": False,
       "help": False
     }
@@ -123,9 +122,9 @@ Usage
         if expected_vars:
           var = expected_vars.groups()[-1]
           req = expected_vars.groups()[-2]
-          expected[var] = False if req == ".optional" else True
+          self.expected[var] = False if req == ".optional" else True
           line = line[expected_vars.end():]
-    return expected
+    return self.expected
 
   def display(self) -> None:
     """ Display a table of all of the args parsed """
@@ -133,13 +132,18 @@ Usage
     table.add_column("Variable name")
     table.add_column("Variable value")
     table.add_column("Variable type")
+    table.add_column("Variable required")
 
     for var in list(self.vars.keys()):
-      val = getattr(self, var)
+      if self.expected[var]:
+        val = getattr(self.required, var)
+      else:
+        val = getattr(self.optional, var)
       table.add_row(
         var,
         str(val),
-        type(val).__name__
+        type(val).__name__,
+        "🗸" if self.expected[var] else "✗"
       )
 
     console = Console()
