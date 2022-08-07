@@ -4,19 +4,13 @@ class Argument:
 
   def __init__(self, line: str = ""):
     self.line = line
-    self.require = {
-      True: f"(.required)?.",
-      False: f".optional."
-    }
 
-  def required(self, required: bool = True):
-    regexp = re.compile(self.require[required])
+  def required(self, required: bool = False):
+    regexp = re.compile("\.optional\.")
     result = re.match(regexp, self.line)
-    print(self.line, regexp)
     if required and result:
-      return True
-    print(required, result)
-    return False
+      return False
+    return True
 
 class Required(Argument):
 

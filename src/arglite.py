@@ -13,6 +13,8 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 from .code import Code
+from .argument import Required
+from .argument import Optional
 
 class Parser:
 
@@ -22,8 +24,9 @@ class Parser:
     self.h, self.help = None, None
     arg_str = self.flatten(sys.argv[1:])
     self.args = self.pairs(arg_str)
+    self.required = Required()
+    self.optional = Optional()
     self.set_vars()
-    self.reflect()
 
   def __getattribute__(self, name) -> Any:
     """ Handle missing attributes and flags """
@@ -31,7 +34,14 @@ class Parser:
       attr = super().__getattribute__(name)
       return attr
     except AttributeError:
-      print(f"✗ ERROR: The program expected {name}, but didn't get a flag value for {name}!")
+      # A bit hacky, but if the "required" part is assumed,
+      # and not provided, we should look through the required
+      # vars to get the thing
+      try:
+        attr = getattr(self.required, name)
+      except AttributeError:
+        print(f"✗ ERROR: The required a value for {name}, but didn't receive one!")
+
 
   def __str__(self) -> str:
     """ str representation """
@@ -78,31 +88,44 @@ Usage
 
   def set_vars(self) -> None:
     """ Reflect each variable and value to instance """
-    self.vars = []
+    self.vars = { }
+    obj = {
+      True: self.required,
+      False: self.optional
+    }
+    statuses = self.reflect()
     for arg, val in self.args:
       if not val: val = True
       if type(val) == str: val = val.strip()
       arg = arg.strip()
+      setattr(obj[statuses[arg]], arg, self.typify(val))
       if not arg == "h" and not arg == "help":
-        self.vars.append(arg)
-      setattr(self, arg, self.typify(val))
+        self.vars[arg] = getattr(obj[statuses[arg]], arg)
     if self.h or self.help or len(self.vars) == 0:
       self.set_help()
 
-  def reflect(self) -> None:
-    """ Gather information about expected variables """
-    self.expected = []
+  def reflect(self) -> dict:
+    """ Gather information about expected, required, and optional variables """
+    expected = {
+      "h": False,
+      "help": False
+    }
     file = os.path.abspath(
       sys.argv[0]
     )
     code = Code(file)
-    exp = f"{code.name}(\.parser)?\.([a-z0-9_])"
+    exp = f"{code.name}(\.parser)?(\.[a-z0-9_]+)?\.([a-z0-9_]+)"
     regexp = re.compile(exp, re.I)
     for line in code.source:
-      expected_vars = re.search(regexp, line)
-      print(code.check_status(line))
-      if expected_vars:
-        self.expected.append(expected_vars.groups()[-1])
+      while True:
+        expected_vars = re.search(regexp, line)
+        if not expected_vars: break
+        if expected_vars:
+          var = expected_vars.groups()[-1]
+          req = expected_vars.groups()[-2]
+          expected[var] = False if req == ".optional" else True
+          line = line[expected_vars.end():]
+    return expected
 
   def display(self) -> None:
     """ Display a table of all of the args parsed """
@@ -111,7 +134,7 @@ Usage
     table.add_column("Variable value")
     table.add_column("Variable type")
 
-    for var in self.vars:
+    for var in list(self.vars.keys()):
       val = getattr(self, var)
       table.add_row(
         var,
@@ -120,7 +143,7 @@ Usage
       )
 
     console = Console()
-    if len(self.vars) > 0:
+    if len(list(self.vars.keys())) > 0:
       console.print(table)
 
 """ Create a simple instanced variable to run on exec """
