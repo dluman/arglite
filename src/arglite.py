@@ -31,8 +31,7 @@ class Parser:
       attr = super().__getattribute__(name)
       return attr
     except AttributeError:
-      print(f"\n\t ❌ ERROR: The program expected {name}, but didn't get a flag value for {name}!\n")
-      sys.exit(1)
+      print(f"❌ ERROR: The program expected {name}, but didn't get a flag value for {name}!")
 
   def __str__(self) -> str:
     """ str representation """
@@ -122,7 +121,6 @@ Usage
     console = Console()
     if len(self.vars) > 0:
       console.print(table)
-
 
 """ Create a simple instanced variable to run on exec """
 parser = Parser()
