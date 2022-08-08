@@ -21,10 +21,9 @@ class Required(Argument):
 
   def __getattribute__(self, name) -> Any:
     try:
-      attr = super().__getattribute__(name)
-      return attr
-    except:
-      print(f"✗ ERROR: The required a value for {name}, but didn't receive one!")
+      return super().__getattribute__(name)
+    except AttributeError:
+      pass
 
 class Optional(Argument):
 
@@ -33,7 +32,11 @@ class Optional(Argument):
 
   def __getattribute__(self, name) -> Any:
     try:
-      attr = super().__getattribute__(name)
-      return attr
+      return super().__getattribute__(name)
     except AttributeError:
-      return 0
+      return None
+
+class RequirementError(Exception):
+
+  def __init__(self, name, *args):
+    super().__init__(args)

@@ -15,11 +15,13 @@ from rich.markdown import Markdown
 from .code import Code
 from .argument import Required
 from .argument import Optional
+from .argument import RequirementError
 
 class Parser:
 
   def __init__(self):
     """ Entry point. """
+    self.errors = [ ]
     self.file = sys.argv[0]
     self.h, self.help = None, None
     arg_str = self.flatten(sys.argv[1:])
@@ -28,24 +30,38 @@ class Parser:
     self.optional = Optional()
     self.set_vars()
 
+    # Rattle off the error report
+    for var in self.errors:
+      print(f"✗ ERROR: The program required a value for {var}, but didn't receive one!")
+    print(self.errors)
+    # If there are required variable errors, DUCK OUT!
+    if len(self.errors) > 0:
+      exit(1)
+
   def __getattribute__(self, name) -> Any:
     """ Handle missing attributes and flags """
+    # Try to get the variable from self first
     try:
-      attr = super().__getattribute__(name)
-      return attr
+      return super().__getattribute__(name)
     except AttributeError:
-      # A bit hacky, but if the "required" part is assumed,
-      # and not provided, we should look through the required
-      # vars to get the thing
-      try:
-        attr = getattr(self.required, name)
-      except AttributeError:
-        pass
+      # If not there, check the self.required set
+      if hasattr(self.required, name):
+        attr = self.required.__getattribute__(name)
+        if attr: return attr
+    # If in neither of those places, see if the var
+    # was required at at all
+    try:
+      if not self.expected[name]:
+        raise RequirementError(name)
+      if not name in self.errors:
+        self.errors.append(name)
+    # If RequirementError is raised, must be optional?
+    except (KeyError, RequirementError):
+      pass
 
   def __str__(self) -> str:
     """ str representation """
     md = """
-
 arglite
 
 Hi! You're seeing this message because you used a help flag or
@@ -58,7 +74,6 @@ Usage
 
 - Provide arbitary flags to a program at runtime
 - Interpret flags with the argparse.parser object
-
     """
     return md
 
@@ -134,11 +149,24 @@ Usage
     table.add_column("Variable type")
     table.add_column("Variable required")
 
-    for var in list(self.vars.keys()):
+    # All help flags never appear
+    del self.expected["h"]
+    del self.expected["help"]
+
+    for var in list(self.expected.keys()):
+      # Callables shouldn't appear either
+      if hasattr(self, var):
+        if callable(getattr(self, var)):
+          continue
+      # The real business
       if self.expected[var]:
-        val = getattr(self.required, var)
+        try:
+          val = getattr(self.required, var)
+        except: pass
       else:
-        val = getattr(self.optional, var)
+        try:
+          val = getattr(self.optional, var)
+        except: pass
       table.add_row(
         var,
         str(val),
@@ -149,6 +177,8 @@ Usage
     console = Console()
     if len(list(self.vars.keys())) > 0:
       console.print(table)
+
+# TODO: Write a system exit handler?
 
 """ Create a simple instanced variable to run on exec """
 parser = Parser()
