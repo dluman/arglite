@@ -1,6 +1,7 @@
 import re
 import os
 import sys
+import signal
 import inspect
 import importlib
 
@@ -21,7 +22,6 @@ class Parser:
 
   def __init__(self):
     """ Entry point. """
-    self.errors = [ ]
     self.file = sys.argv[0]
     self.h, self.help = None, None
     arg_str = self.flatten(sys.argv[1:])
@@ -30,13 +30,8 @@ class Parser:
     self.optional = Optional()
     self.set_vars()
 
-    # Rattle off the error report
-    for var in self.errors:
-      print(f"✗ ERROR: The program required a value for {var}, but didn't receive one!")
-    print(self.errors)
-    # If there are required variable errors, DUCK OUT!
-    if len(self.errors) > 0:
-      exit(1)
+    if self.optional.h or self.optional.help or len(self.vars) == 0:
+      self.set_help()
 
   def __getattribute__(self, name) -> Any:
     """ Handle missing attributes and flags """
@@ -48,27 +43,17 @@ class Parser:
       if hasattr(self.required, name):
         attr = self.required.__getattribute__(name)
         if attr: return attr
-    # If in neither of those places, see if the var
-    # was required at at all
-    try:
-      if not self.expected[name]:
-        raise RequirementError(name)
-      if not name in self.errors:
-        self.errors.append(name)
-    # If RequirementError is raised, must be optional?
-    except (KeyError, RequirementError):
-      pass
 
   def __str__(self) -> str:
     """ str representation """
     md = """
 arglite
 
-Hi! You're seeing this message because you used a help flag or
-because there were no variable specified on the command line as
-flags!
-
 argparse is a CLI argument parser for the impatient
+
+Hi! You're seeing this message because you used a help flag or
+because there were no variables specified on the command line as
+flags!
 
 Usage
 
@@ -95,8 +80,6 @@ Usage
 
   def set_help(self):
     """ Set the help flag response """
-    del self.h
-    del self.help
     print(self.__str__())
     self.display()
 
@@ -115,8 +98,6 @@ Usage
       setattr(obj[statuses[arg]], arg, self.typify(val))
       if not arg == "h" and not arg == "help":
         self.vars[arg] = getattr(obj[statuses[arg]], arg)
-    if self.h or self.help or len(self.vars) == 0:
-      self.set_help()
 
   def reflect(self) -> dict:
     """ Gather information about expected, required, and optional variables """
@@ -149,9 +130,13 @@ Usage
     table.add_column("Variable type")
     table.add_column("Variable required")
 
-    # All help flags never appear
-    del self.expected["h"]
-    del self.expected["help"]
+    helps = ["h", "help"]
+
+    for help in helps:
+      try:
+        del self.expected[help]
+      except:
+        pass
 
     for var in list(self.expected.keys()):
       # Callables shouldn't appear either
@@ -175,10 +160,8 @@ Usage
       )
 
     console = Console()
-    if len(list(self.vars.keys())) > 0:
-      console.print(table)
-
-# TODO: Write a system exit handler?
+    #if len(list(self.vars.keys())) > 0:
+    console.print(table)
 
 """ Create a simple instanced variable to run on exec """
 parser = Parser()
