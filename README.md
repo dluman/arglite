@@ -31,6 +31,48 @@ if __name__ == "__main__":
 
 Run using `python main.py -a Yo --b that is -c`.
 
+### HELP!
+
+Help now appears when no variables are provided or when requested by use of `-h` (`--h`) or `-help` (`--help`).
+It looks like this:
+
+```
+arglite
+
+argparse is a CLI argument parser for the impatient
+
+Hi! You're seeing this message because you used a help flag or
+because there were no variables specified on the command line as
+flags!
+
+Usage
+
+- Provide arbitary flags to a program at runtime
+- Interpret flags with the argparse.parser object
+    
+                              CLI flags                               
+┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃ Variable name ┃ Variable value ┃ Variable type ┃ Variable required ┃
+┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│ a             │ None           │ NoneType      │ 🗸                 │
+│ b             │ None           │ NoneType      │ 🗸                 │
+│ c             │ None           │ NoneType      │ ✗                 │
+│ d             │ None           │ NoneType      │ ✗                 │
+└───────────────┴────────────────┴───────────────┴───────────────────┘
+```
+
+### Errors
+
+When errors are present (i.e. flags are provided which aren't used in the code _or_ flags used aren't provided),
+you'll see errors:
+
+```
+✗ ERROR: A value was provided for A, but the program doesn't call for it
+✗ ERROR: A value was expected for a, but not was provided as a flag
+✗ ERROR: A value was expected for b, but not was provided as a flag
+```
+
+
 ## Notes
 
 * Flags with no value are automatically converted to `True` boolean
