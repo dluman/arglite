@@ -29,6 +29,10 @@ class Parser:
     self.required = Required()
     self.optional = Optional()
     self.set_vars()
+    self.get_errors()
+
+    for error in self.errors:
+      print(f"✗ ERROR: A value was expected for {error}, but not was provided as a flag")
 
     if self.optional.h or self.optional.help or len(self.vars) == 0:
       self.set_help()
@@ -95,9 +99,14 @@ Usage
       if not val: val = True
       if type(val) == str: val = val.strip()
       arg = arg.strip()
-      setattr(obj[statuses[arg]], arg, self.typify(val))
+      try:
+        setattr(obj[statuses[arg]], arg, self.typify(val))
+      except KeyError:
+        print(f"✗ ERROR: A value was provided for {arg}, but the program doesn't call for it")
       if not arg == "h" and not arg == "help":
-        self.vars[arg] = getattr(obj[statuses[arg]], arg)
+        try:
+          self.vars[arg] = getattr(obj[statuses[arg]], arg)
+        except KeyError: pass
 
   def reflect(self) -> dict:
     """ Gather information about expected, required, and optional variables """
@@ -121,6 +130,12 @@ Usage
           self.expected[var] = False if req == ".optional" else True
           line = line[expected_vars.end():]
     return self.expected
+
+  def get_errors(self) -> None:
+    self.errors = [ ]
+    for var in self.expected:
+      if self.expected[var] and not var in dir(self.required):
+        self.errors.append(var)
 
   def display(self) -> None:
     """ Display a table of all of the args parsed """
