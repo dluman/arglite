@@ -17,12 +17,13 @@ Check this out:
 import arglite
 
 def main():
+  # Can include explicit requirement
   print(arglite.parser.required.a)
+  # Can be an implicit requirement
   print(arglite.parser.b)
+  # Can also be purely optional
   print(arglite.parser.optional.c)
   print(arglite.parser.optional.d)
-
-  arglite.parser.display()
 
 if __name__ == "__main__":
   main()
