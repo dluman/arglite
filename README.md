@@ -31,6 +31,24 @@ if __name__ == "__main__":
 
 Run using `python main.py -a Yo --b that is -c`.
 
+For the more intrepid among us, this also works:
+
+```python
+from arglite import parser as cliarg
+
+def main():
+  # Can include explicit requirement
+  print(cliarg.required.a)
+  # Can be an implicit requirement
+  print(cliarg.b)
+  # Can also be purely optional
+  print(cliarg.optional.c)
+  print(cliarg.optional.d)
+
+if __name__ == "__main__":
+  main()
+```
+
 ### HELP!
 
 Help now appears when no variables are provided or when requested by use of `-h` (`--h`) or `-help` (`--help`).
