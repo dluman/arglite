@@ -1,13 +1,13 @@
 import re
-import importlib
 import inspect
 
 from .argument import Argument
+from importlib import abc
 
 class Code:
 
   def __init__(self, file):
-    contents = importlib.abc.InspectLoader.source_to_code(
+    contents = abc.InspectLoader.source_to_code(
       "string",
       path = file
     )
