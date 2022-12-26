@@ -1,5 +1,7 @@
 # arglite
 
+[![PyPI version](https://img.shields.io/pypi/v/arglite)](https://pypi.org/project/arglite/)
+
 A lightweight, dynamic argument parsing library for Python programs with klugy support for typing variables.
 
 I made this for a teaching machine project I'm working on (I needed a custom argument parser for _reasons_),
