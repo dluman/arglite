@@ -34,7 +34,7 @@ class Parser:
     for error in self.errors:
       print(f"✗ ERROR: A value was expected for {error}, but not was provided as a flag")
 
-    if self.optional.h or self.optional.help or len(self.vars) == 0:
+    if self.optional.h or self.optional.help:
       self.set_help()
 
   def __getattribute__(self, name) -> Any:
