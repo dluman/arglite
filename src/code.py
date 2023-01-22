@@ -7,18 +7,10 @@ from importlib import abc
 class Code:
 
   def __init__(self, file):
-    contents = abc.InspectLoader.source_to_code(
-      "string",
-      path = file
-    )
-    self.source = self.inspect(contents)
+    with open(file, "r") as fh:
+        self.source = fh.readlines()
     self.name = self.find_import()
     self.partial = self.check_partial()
-
-  def inspect(self, contents: str = "") -> list:
-    """ Break the code into individual lines to scan """
-    lines = inspect.getsourcelines(contents)[0]
-    return [line.strip() for line in lines if line.strip() != ""]
 
   def find_import(self) -> str:
     """ Figure out how a user imports the module to scan code """
