@@ -22,7 +22,8 @@ class Parser:
 
   def __init__(self):
     """ Entry point. """
-    self.file = sys.argv[0]
+    #self.file = sys.argv[0]
+    self.file = self.caller()
     self.h, self.help = None, None
     arg_str = self.flatten(sys.argv[1:])
     self.args = self.pairs(arg_str)
@@ -65,6 +66,13 @@ Usage
 - Interpret flags with the argparse.parser object
     """
     return md
+
+  def caller(self) -> str:
+    stack = inspect.stack()
+    for frame in stack:
+      if frame.function == "<module>":
+        if os.path.dirname(frame.filename) != os.path.dirname(__file__):
+            return frame.filename
 
   def flatten(self, args: list = []) -> str:
     """ Flatten a list into a str """
@@ -114,10 +122,10 @@ Usage
       "h": False,
       "help": False
     }
-    file = os.path.abspath(
-      sys.argv[0]
-    )
-    code = Code(file)
+    #file = os.path.abspath(
+    #  sys.argv[0]
+    #)
+    code = Code(self.file)
     exp = f"{code.name}(\.parser)?(\.[a-z0-9_]+)?\.([a-z0-9_]+)"
     regexp = re.compile(exp, re.I)
     for line in code.source:
