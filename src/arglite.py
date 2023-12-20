@@ -22,7 +22,6 @@ class Parser:
 
   def __init__(self):
     """ Entry point. """
-    #self.file = sys.argv[0]
     self.file = self.caller()
     self.h, self.help = None, None
     arg_str = self.flatten(sys.argv[1:])
@@ -80,7 +79,8 @@ Usage
 
   def pairs(self, args: str = "") -> list:
     """ Get each pair of args and values, blanks if no value """
-    return re.findall(r"-{1,2}([^-][a-z]*(?:\s)?)([^-]*)", args)
+    return re.findall(r"((?<![a-z])-{1,2}[a-z0-9]+)(?:\s)([a-z0-9-]+)", args)
+    #return re.findall(r"-{1,2}([^-][a-z]*(?:\s)?)([^-]*)", args)
 
   def typify(self, val: Any) -> Any:
     """ Cast as a data structure or other type if possible, else...meh """
