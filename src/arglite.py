@@ -79,8 +79,7 @@ Usage
 
   def pairs(self, args: str = "") -> list:
     """ Get each pair of args and values, blanks if no value """
-    return re.findall(r"((?<![a-z])-{1,2}[a-z0-9]+)(?:\s)([a-z0-9-]+)", args)
-    #return re.findall(r"-{1,2}([^-][a-z]*(?:\s)?)([^-]*)", args)
+    return re.findall(r"((?<![a-z])-{1,2}[a-z0-9]+)(?:\s)([a-zA-Z0-9-_]+)", args)
 
   def typify(self, val: Any) -> Any:
     """ Cast as a data structure or other type if possible, else...meh """
@@ -122,9 +121,6 @@ Usage
       "h": False,
       "help": False
     }
-    #file = os.path.abspath(
-    #  sys.argv[0]
-    #)
     code = Code(self.file)
     exp = f"{code.name}(\.parser)?(\.[a-z0-9_]+)?\.([a-z0-9_]+)"
     regexp = re.compile(exp, re.I)
@@ -183,7 +179,6 @@ Usage
       )
 
     console = Console()
-    #if len(list(self.vars.keys())) > 0:
     console.print(table)
 
 """ Create a simple instanced variable to run on exec """
