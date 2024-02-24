@@ -2,9 +2,9 @@ import setuptools
 
 setuptools.setup(
     name="arglite",
-    version="0.7.0",
+    version="0.7.5",
     packages=['arglite'],
-    package_dir={'arglite': 'src'},
+    package_dir={'': 'src'},
     include_package_data=True,
     description="A lightweight, dynamic arg parser for fun, but not profit.",
     long_description="""

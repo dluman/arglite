@@ -33,6 +33,7 @@ class Parser:
 
     for error in self.errors:
       print(f"✗ ERROR: A value was expected for {error}, but not was provided as a flag")
+      sys.exit(1)
 
     if self.optional.h or self.optional.help:
       self.set_help()
@@ -105,7 +106,7 @@ Usage
     for arg, val in self.args:
       if not val: val = True
       if type(val) == str: val = val.strip()
-      arg = arg.strip()
+      arg = arg.strip().replace("-","")
       try:
         setattr(obj[statuses[arg]], arg, self.typify(val))
       except KeyError:
