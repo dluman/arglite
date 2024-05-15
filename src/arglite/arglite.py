@@ -26,6 +26,7 @@ class Parser:
     self.h, self.help = None, None
     arg_str = self.flatten(sys.argv[1:])
     self.args = self.pairs(arg_str)
+    print(self.args)
     self.required = Required()
     self.optional = Optional()
     self.set_vars()
@@ -80,7 +81,7 @@ Usage
 
   def pairs(self, args: str = "") -> list:
     """ Get each pair of args and values, blanks if no value """
-    return re.findall(r"((?<![a-z])-{1,2}[a-z0-9]+)(?:\s)([a-zA-Z0-9-_]+)", args)
+    return re.findall(r"((?<![a-z])-{1,2}[a-z0-9]+)(?:\s)([a-zA-Z0-9_]+)?", args)
 
   def typify(self, val: Any) -> Any:
     """ Cast as a data structure or other type if possible, else...meh """
