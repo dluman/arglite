@@ -54,32 +54,6 @@ if __name__ == "__main__":
 ### HELP!
 
 Help now appears when no variables are provided or when requested by use of `-h` (`--h`) or `-help` (`--help`).
-It looks like this:
-
-```
-arglite
-
-argparse is a CLI argument parser for the impatient
-
-Hi! You're seeing this message because you used a help flag or
-because there were no variables specified on the command line as
-flags!
-
-Usage
-
-- Provide arbitary flags to a program at runtime
-- Interpret flags with the argparse.parser object
-    
-                              CLI flags                               
-┏━━━━━━━━┳━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━┓
-┃Variable name┃Variable value┃Variable type┃Variable required┃
-┡━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━┩
-│ a             │ None         │ NoneType     │ 🗸               │
-│ b             │ None         │ NoneType     │ 🗸               │
-│ c             │ None         │ NoneType     │ ✗               │
-│ d             │ None         │ NoneType     │ ✗               │
-└───────────────┴──────────────┴──────────────┴─────────────────┘
-```
 
 ### Errors
 
