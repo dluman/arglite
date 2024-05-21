@@ -26,7 +26,6 @@ class Parser:
     self.h, self.help = None, None
     arg_str = self.flatten(sys.argv[1:])
     self.args = self.pairs(arg_str)
-    print(self.args)
     self.required = Required()
     self.optional = Optional()
     self.set_vars()
