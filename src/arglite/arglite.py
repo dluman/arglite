@@ -85,7 +85,6 @@ Usage
   def typify(self, val: Any) -> Any:
     """ Cast as a data structure or other type if possible, else...meh """
     try:
-      print(f"trying type...{val}")
       val = literal_eval(val)
     except:
       pass
