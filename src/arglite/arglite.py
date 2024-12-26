@@ -80,7 +80,7 @@ Usage
 
   def pairs(self, args: str = "") -> list:
     """ Get each pair of args and values, blanks if no value """
-    return re.findall(r"((?<![a-z])-{1,2}[a-z0-9,\[\]\{\}\:\"]+)(?:\s)([a-zA-Z0-9_,\[\]\{\}\:\"]+)?", args)
+    return re.findall(r"((?<![a-z])-{1,2}[a-z0-9,\[\]\{\}\:\"\s]+)(?:\s)([a-zA-Z0-9_,\[\]\{\}\:\"\s]+)?", args)
 
   def typify(self, val: Any) -> Any:
     """ Cast as a data structure or other type if possible, else...meh """
