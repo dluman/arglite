@@ -80,7 +80,7 @@ Usage
 
   def pairs(self, args: str = "") -> list:
     """ Get each pair of args and values, blanks if no value """
-    return re.findall(r"((?<![a-z])-{1,2}[a-z0-9,\[\]\{\}\:\"\s]+)(?:\s)([a-zA-Z0-9_,\[\]\{\}\:\"\s]+)?", args)
+    return re.findall(r"((-{1,2}[a-z]+)(\s)?)([a-zA-Z]+|\"[a-zA-Z0-9\s]+\"|\{.*\}|\[.*\])?",args)
 
   def typify(self, val: Any) -> Any:
     """ Cast as a data structure or other type if possible, else...meh """
@@ -103,7 +103,7 @@ Usage
       False: self.optional
     }
     statuses = self.reflect()
-    for arg, val in self.args:
+    for arg, flag, sep, val in self.args:
       if not val: val = True
       if type(val) == str: val = val.strip()
       arg = arg.strip().replace("-","")
