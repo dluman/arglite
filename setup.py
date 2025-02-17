@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="arglite",
-    version="0.9.4",
+    version="0.9.5",
     packages=['arglite'],
     package_dir={'': 'src'},
     include_package_data=True,
