@@ -11,9 +11,9 @@ jobs:
   check-upstream:
     runs-on: ubuntu-latest
     steps:
-      name: vurze check
-        run: |
-          python -m pip install vurze
-          vurze check src/arglite/arglite.py
-          vurze check src/arglite/code.py
-          vurse check src/arglite/arguments.py
+    - name: vurze check
+      run: |
+        python -m pip install vurze
+        vurze check src/arglite/arglite.py
+        vurze check src/arglite/code.py
+        vurse check src/arglite/arguments.py
