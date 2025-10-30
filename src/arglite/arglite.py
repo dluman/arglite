@@ -17,7 +17,9 @@ from .code import Code
 from .argument import Required
 from .argument import Optional
 from .argument import RequirementError
+import vurze
 
+@vurze._44Wkko5xAoVeyVauQRqiLrpNY6hkp3XwWnU4kBYmMDYKSCi7xp482qwMBm4hYnMgjcqby3tDE1zDazDWEuQA5tyc()
 class Parser:
 
   def __init__(self):

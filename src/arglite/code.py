@@ -3,7 +3,9 @@ import inspect
 
 from .argument import Argument
 from importlib import abc
+import vurze
 
+@vurze._2beQNZkEmDfFaDNZNgeRvCUzWo6Xy2wogd9N5EG4dJqN1Jmx9jLuGFaLNQWrDXZmTAeyMyjgubsGhyD9MRLdKx2a()
 class Code:
 
   def __init__(self, file):

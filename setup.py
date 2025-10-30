@@ -26,6 +26,7 @@ Programs will produce error messages when flags are missing
     long_description_content_type="text/x-rst",
     install_requires=[
       'rich',
+      'vurze'
     ],
     url="https://github.com/dluman/arglite"
  )
