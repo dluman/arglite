@@ -82,7 +82,9 @@ Usage
 
   def pairs(self, args: str = "") -> list:
     """ Get each pair of args and values, blanks if no value """
-    return re.findall(r"((-{1,2}[a-z\_0-9]+)(\s)?)([a-zA-Z\_0-9\.\:\/\s]+|\"[a-zA-Z0-9\s\._]+\"|\{.*\}|\[.*\])?",args)
+    matches = re.findall(r"((?<=-{2})[a-z\_0-9]+)(?:\s{0,})(([a-z0-9-]+)|(\"[^\"]*\")|('[^']*'))?",args)
+    # Return only those matches who have a corresponding flag
+    return [match[:2] for match in matches if match[0]]
 
   def typify(self, val: Any) -> Any:
     """ Cast as a data structure or other type if possible, else...meh """
@@ -105,17 +107,17 @@ Usage
       False: self.optional
     }
     statuses = self.reflect()
-    for arg, flag, sep, val in self.args:
+    for flag, val in self.args:
+      # Default value for flags without value: True
       if not val: val = True
       if type(val) == str: val = val.strip()
-      arg = arg.strip().replace("-","")
       try:
-        setattr(obj[statuses[arg]], arg, self.typify(val))
+        setattr(obj[statuses[flag]], flag, self.typify(val))
       except KeyError:
-        print(f"✗ ERROR: A value was provided for {arg}, but the program doesn't call for it")
-      if not arg == "h" and not arg == "help":
+        print(f"✗ ERROR: A value was provided for {flag}, but the program doesn't call for it")
+      if not flag == "h" and not flag == "help":
         try:
-          self.vars[arg] = getattr(obj[statuses[arg]], arg)
+          self.vars[flag] = getattr(obj[statuses[flag]], flag)
         except KeyError: pass
 
   def reflect(self) -> dict:
