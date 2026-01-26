@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta:__legacy__"
 
 [project]
 name = "arglite"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
     "rich",
     "vurze",

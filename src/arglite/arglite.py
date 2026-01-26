@@ -82,7 +82,7 @@ Usage
 
   def pairs(self, args: str = "") -> list:
     """ Get each pair of args and values, blanks if no value """
-    matches = re.findall(r"((?<=-{2})[a-z\_0-9]+)(?:\s{0,})((?:[\[\{])?(([a-z0-9-,:\.\/]+)|(\"[^\"]*\")|('[^']*'))(?:[\]\}])?)?",args)
+    matches = re.findall(r"((?<=-{2})[a-z\_0-9]+)(?:\s{0,})((?:[\[\{])?(([a-z0-9-,:\.\/\*]+)|(\"[^\"]*\")|('[^']*'))(?:[\]\}])?)?",args)
     # Return only those matches who have a corresponding flag
     return [match[:2] for match in matches if match[0]]
 
