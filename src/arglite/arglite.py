@@ -1,190 +1,177 @@
 import re
-import os
 import sys
-import signal
-import inspect
-import importlib
+from typing import Any, Callable, Optional
 
-from typing import Any
-from ast import literal_eval
-
-from rich import print
-from rich.table import Table
 from rich.console import Console
-from rich.markdown import Markdown
 
-from .code import Code
-from .argument import Required
-from .argument import Optional
-from .argument import RequirementError
-import vurze
+from .exceptions import ParseError, RequirementError
+from .flag import Flag
+from . import help as help_module
+from . import parse
 
-@vurze._44Wkko5xAoVeyVauQRqiLrpNY6hkp3XwWnU4kBYmMDYKSCi7xp482qwMBm4hYnMgjcqby3tDE1zDazDWEuQA5tyc()
+
 class Parser:
+    """A lightweight, explicit CLI argument parser."""
 
-  def __init__(self):
-    """ Entry point. """
-    self.file = self.caller()
-    self.h, self.help = None, None
-    arg_str = self.flatten(sys.argv[1:])
-    self.args = self.pairs(arg_str)
-    self.required = Required()
-    self.optional = Optional()
-    self.set_vars()
-    self.get_errors()
+    _VALID_FLAG_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_\-]*$")
 
-    for error in self.errors:
-      print(f"✗ ERROR: A value was expected for {error}, but not was provided as a flag")
-      sys.exit(1)
+    def __init__(self):
+        self._flags: dict[str, Flag] = {}
+        self._values: dict[str, Any] = {}
+        self._parsed = False
 
-    if self.optional.h or self.optional.help:
-      self.set_help()
+    def require(
+        self,
+        name: str,
+        short: Optional[str] = None,
+        type: Optional[Callable[[str], Any]] = None,
+    ) -> "Parser":
+        """Declare a required flag."""
+        self._declare(name, short=short, required=True, default=None, type=type)
+        return self
 
-  def __getattribute__(self, name) -> Any:
-    """ Handle missing attributes and flags """
-    # Try to get the variable from self first
-    try:
-      return super().__getattribute__(name)
-    except AttributeError:
-      # If not there, check the self.required set
-      if hasattr(self.required, name):
-        attr = self.required.__getattribute__(name)
-        if attr: return attr
+    def optional(
+        self,
+        name: str,
+        short: Optional[str] = None,
+        default: Any = None,
+        type: Optional[Callable[[str], Any]] = None,
+    ) -> "Parser":
+        """Declare an optional flag with an optional default value."""
+        self._declare(name, short=short, required=False, default=default, type=type)
+        return self
 
-  def __str__(self) -> str:
-    """ str representation """
-    md = """
-arglite
+    def flag(self, name: str, short: Optional[str] = None) -> "Parser":
+        """Declare a boolean flag (True if present, False otherwise)."""
+        self._declare(
+            name, short=short, required=False, default=False, type=bool, is_flag=True
+        )
+        return self
 
-argparse is a CLI argument parser for the impatient
+    def _declare(
+        self,
+        name: str,
+        short: Optional[str],
+        required: bool,
+        default: Any,
+        type: Optional[Callable[[str], Any]],
+        is_flag: bool = False,
+    ) -> None:
+        if not isinstance(name, str) or not self._VALID_FLAG_NAME.match(name):
+            raise ValueError(f"Invalid flag name: {name!r}")
+        if name in self._flags:
+            raise ValueError(f"Flag already declared: {name!r}")
 
-Hi! You're seeing this message because you used a help flag or
-because there were no variables specified on the command line as
-flags!
+        resolved_short = self._resolve_short(name, short)
+        self._flags[name] = Flag(
+            name,
+            short=resolved_short,
+            required=required,
+            default=default,
+            type=type,
+            is_flag=is_flag,
+        )
 
-Usage
+    def _resolve_short(
+        self, name: str, short: Optional[str]
+    ) -> Optional[str]:
+        """Resolve the short alias for a flag."""
+        if short is not None:
+            if not isinstance(short, str) or len(short) != 1 or not short.isalpha():
+                raise ValueError(
+                    f"Invalid short flag for --{name}: {short!r} "
+                    "(must be a single letter)"
+                )
+            short = short.lower()
+            for flag in self._flags.values():
+                if flag.short == short:
+                    raise ValueError(
+                        f"Short flag '-{short}' is already used by --{flag.name}"
+                    )
+            return short
 
-- Provide arbitary flags to a program at runtime
-- Interpret flags with the argparse.parser object
-    """
-    return md
+        first = name[0].lower()
+        for flag in self._flags.values():
+            if flag.short == first:
+                return None
+        return first
 
-  def caller(self) -> str:
-    stack = inspect.stack()
-    for frame in stack:
-      if frame.function == "<module>":
-        if os.path.dirname(frame.filename) != os.path.dirname(__file__):
-            return frame.filename
+    def _parse(self, argv: list[str]) -> None:
+        """Parse argv into flag/value pairs."""
+        if self._parsed:
+            return
 
-  def flatten(self, args: list = []) -> str:
-    """ Flatten a list into a str """
-    return " ".join(args)
+        # Help request: show help and exit.
+        if any(arg in ("-h", "--help") for arg in argv):
+            self._show_help()
 
-  def pairs(self, args: str = "") -> list:
-    """ Get each pair of args and values, blanks if no value """
-    matches = re.findall(r"((?<=-{2})[a-z\_0-9]+)(?:\s{0,})((?:[\[\{])?(([a-z0-9-,:\.\/\*]+)|(\"[^\"]*\")|('[^']*'))(?:[\]\}])?)?",args)
-    # Return only those matches who have a corresponding flag
-    return [match[:2] for match in matches if match[0]]
+        raw = parse.tokenize(argv, self._flags)
+        for provided in raw:
+            if provided not in self._flags:
+                raise ParseError(
+                    f"ERROR: Unknown flag --{provided}; the program does not call for it"
+                )
 
-  def typify(self, val: Any) -> Any:
-    """ Cast as a data structure or other type if possible, else...meh """
-    try:
-      val = literal_eval(val)
-    except:
-      pass
-    return val
+        for name, flag in self._flags.items():
+            if name in raw:
+                values = raw[name]
+                if not flag.expects_value:
+                    # Boolean flag: presence means True; an explicit value is
+                    # parsed as a boolean (e.g. --verbose=false).
+                    if values:
+                        self._values[name] = flag.convert(values[-1])
+                    else:
+                        self._values[name] = True
+                else:
+                    if not values:
+                        raise ParseError(
+                            f"ERROR: --{name} was provided without a value"
+                        )
+                    self._values[name] = flag.convert(values[-1])
+            else:
+                if flag.required:
+                    raise RequirementError(
+                        f"ERROR: --{name} is required but was not provided"
+                    )
+                self._values[name] = flag.default
 
-  def set_help(self):
-    """ Set the help flag response """
-    print(self.__str__())
-    self.display()
+        self._parsed = True
 
-  def set_vars(self) -> None:
-    """ Reflect each variable and value to instance """
-    self.vars = { }
-    obj = {
-      True: self.required,
-      False: self.optional
-    }
-    statuses = self.reflect()
-    for flag, val in self.args:
-      # Default value for flags without value: True
-      if not val: val = True
-      if type(val) == str: val = val.strip()
-      try:
-        setattr(obj[statuses[flag]], flag, self.typify(val))
-      except KeyError:
-        print(f"✗ ERROR: A value was provided for {flag}, but the program doesn't call for it")
-      if not flag == "h" and not flag == "help":
-        try:
-          self.vars[flag] = getattr(obj[statuses[flag]], flag)
-        except KeyError: pass
+    def _show_help(self) -> None:
+        """Print help and exit cleanly."""
+        help_module.show_summary()
+        help_module.render(self._flags)
+        sys.exit(0)
 
-  def reflect(self) -> dict:
-    """ Gather information about expected, required, and optional variables """
-    self.expected = {
-      "h": False,
-      "help": False
-    }
-    code = Code(self.file)
-    exp = f"{code.name}(\.parser)?(\.[a-z0-9_]+)?\.([a-z0-9_]+)"
-    regexp = re.compile(exp, re.I)
-    for line in code.source:
-      while True:
-        expected_vars = re.search(regexp, line)
-        if not expected_vars: break
-        if expected_vars:
-          var = expected_vars.groups()[-1]
-          req = expected_vars.groups()[-2]
-          self.expected[var] = False if req == ".optional" else True
-          line = line[expected_vars.end():]
-    return self.expected
+    def _ensure_parsed(self) -> None:
+        if not self._parsed:
+            try:
+                self._parse(sys.argv[1:])
+            except (ParseError, RequirementError) as exc:
+                console = Console(stderr=True)
+                console.print(f"✗ {exc}")
+                sys.exit(1)
+            except Exception as exc:
+                raise ParseError(f"ERROR: Unexpected parser failure: {exc}") from exc
 
-  def get_errors(self) -> None:
-    self.errors = [ ]
-    for var in self.expected:
-      if self.expected[var] and not var in dir(self.required):
-        self.errors.append(var)
+    def __getattribute__(self, name: str) -> Any:
+        # Always allow access to internal attributes and methods.
+        if name.startswith("_") or name in ("require", "optional", "flag"):
+            return super().__getattribute__(name)
 
-  def display(self) -> None:
-    """ Display a table of all of the args parsed """
-    table = Table(title="CLI flags")
-    table.add_column("Variable name")
-    table.add_column("Variable value")
-    table.add_column("Variable type")
-    table.add_column("Variable required")
+        # Declared flags are resolved lazily against sys.argv.
+        flags = super().__getattribute__("_flags")
+        if name in flags:
+            super().__getattribute__("_ensure_parsed")()
+            return super().__getattribute__("_values")[name]
 
-    helps = ["h", "help"]
+        return super().__getattribute__(name)
 
-    for help in helps:
-      try:
-        del self.expected[help]
-      except:
-        pass
+    def __dir__(self):
+        base = list(super().__dir__())
+        base.extend(self._flags.keys())
+        return sorted(set(base))
 
-    for var in list(self.expected.keys()):
-      # Callables shouldn't appear either
-      if hasattr(self, var):
-        if callable(getattr(self, var)):
-          continue
-      # The real business
-      if self.expected[var]:
-        try:
-          val = getattr(self.required, var)
-        except: pass
-      else:
-        try:
-          val = getattr(self.optional, var)
-        except: pass
-      table.add_row(
-        var,
-        str(val),
-        type(val).__name__,
-        "🗸" if self.expected[var] else "✗"
-      )
 
-    console = Console()
-    console.print(table)
-
-""" Create a simple instanced variable to run on exec """
+# Global parser instance.
 parser = Parser()

@@ -2,10 +2,9 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/arglite)](https://pypi.org/project/arglite/)
 
-A lightweight, dynamic argument parsing library for Python programs with klugy support for typing variables.
+A lightweight, explicit argument parsing library for Python programs.
 
-I made this for a teaching machine project I'm working on (I needed a custom argument parser for _reasons_),
-and I'm always too impatient to use `argparse`.
+I made this for a teaching machine project I'm working on (I needed a custom argument parser for _reasons_), and I'm always too impatient to use `argparse`.
 
 ## Installation
 
@@ -13,61 +12,66 @@ Find this tool on `PyPI`: `pip install arglite`
 
 ## Usage
 
-Check this out:
+Declare the flags your program expects, then access them as attributes on the global `parser`:
 
 ```python
 import arglite
 
+arglite.parser.require("name", type=str)
+arglite.parser.optional("count", default=1, type=int)
+arglite.parser.flag("verbose")
+
 def main():
-  # Can include explicit requirement
-  print(arglite.parser.required.a)
-  # Can be an implicit requirement
-  print(arglite.parser.b)
-  # Can also be purely optional
-  print(arglite.parser.optional.c)
-  print(arglite.parser.optional.d)
+    print(arglite.parser.name)
+    print(arglite.parser.count)
+    print(arglite.parser.verbose)
 
 if __name__ == "__main__":
-  main()
+    main()
 ```
 
-Run using `python main.py -a Yo --b that is -c`.
+Run it with:
 
-For the more intrepid among us, this also works:
+```bash
+python main.py --name Yo --count 5 --verbose
+```
+
+### Declarations
+
+- `parser.require(name, short=None, type=None)` — required flag; exits with an error if missing.
+- `parser.optional(name, short=None, default=None, type=None)` — optional flag with an optional default value.
+- `parser.flag(name, short=None)` — boolean flag; `True` if present, otherwise `False`.
+
+If `short` is not given, the first letter of the flag name is used automatically (e.g. `--name` can also be `-n`).
+
+### Accessing values
+
+Declared flags are accessed directly on the parser:
 
 ```python
-from arglite import parser as cliarg
-
-def main():
-  # Can include explicit requirement
-  print(cliarg.required.a)
-  # Can be an implicit requirement
-  print(cliarg.b)
-  # Can also be purely optional
-  print(cliarg.optional.c)
-  print(cliarg.optional.d)
-
-if __name__ == "__main__":
-  main()
+arglite.parser.name
+arglite.parser.count
+arglite.parser.verbose
 ```
 
 ### HELP!
 
-Help now appears when no variables are provided or when requested by use of `-h` (`--h`) or `-help` (`--help`).
+Help appears when `-h` / `--help` is used.
 
 ### Errors
 
-When errors are present (i.e. flags are provided which aren't used in the code _or_ flags used aren't provided),
-you'll see errors:
+When arguments are missing, unknown, or cannot be converted to the declared type, you'll see clear errors:
 
 ```
-✗ ERROR: A value was provided for A, but the program doesn't call for it
-✗ ERROR: A value was expected for a, but not was provided as a flag
-✗ ERROR: A value was expected for b, but not was provided as a flag
+ERROR: --name is required but was not provided
+ERROR: Unknown flag --foo; the program does not call for it
+ERROR: Value for --count could not be converted to int: 'abc'
 ```
-
 
 ## Notes
 
-* Flags with no value are automatically converted to `True` boolean
-* The module uses `ast.literal_eval`, so `"{'a':'b'}"` will convert to a `dict` (all quotes required)
+- Flags are case-sensitive.
+- Both `-f` / `--flag` and `--flag=value` / `-f=value` syntaxes are supported.
+- Values containing spaces work when passed via the shell's normal quoting rules.
+- Empty string values (`--name ""`) are preserved.
+- `ast.literal_eval` is used for type inference when no explicit `type` is given.

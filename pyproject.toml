@@ -4,14 +4,19 @@ build-backend = "setuptools.build_meta:__legacy__"
 
 [project]
 name = "arglite"
-version = "0.10.1"
+version = "0.11.0"
+requires-python = ">=3.10"
 dependencies = [
     "rich",
-    "vurze",
-    "twine"
 ]
 authors = [
     {name = "Douglas Luman", email = "dluman@allegheny.edu"}
 ]
 readme = "README.md"
-description = "A lightweight, dynamic arg parser for fun, but not profit."
+description = "A lightweight, explicit arg parser for fun, but not profit."
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "twine",
+]
