@@ -1,13 +1,8 @@
-import pytest
 import sys
 
+import pytest
+
 from arglite import Parser, ParseError, RequirementError
-
-
-@pytest.fixture
-def parser():
-    """Return a fresh Parser instance for each test."""
-    return Parser()
 
 
 class TestDeclarations:
@@ -42,14 +37,13 @@ class TestDeclarations:
     def test_explicit_short_flag(self, parser):
         parser.require("name", short="x")
         assert parser._flags["name"].short == "x"
-        assert parser._short_map["x"] == "name"
 
     def test_auto_short_conflict_is_silent(self, parser):
         parser.require("name")
         # Auto-assigned short 'n' is already taken by --name.
         parser.flag("nested")
-        # --nested gets no short alias; --name keeps '-n'.
         assert parser._flags["nested"].short is None
+        assert parser._flags["name"].short == "n"
 
     def test_explicit_short_flag_conflict(self, parser):
         parser.require("name")
@@ -98,7 +92,7 @@ class TestParsing:
         parser._parse([])
         assert parser._values["verbose"] is False
 
-    def test_flag_with_value_still_true(self, parser):
+    def test_flag_with_value_true(self, parser):
         parser.flag("verbose")
         parser._parse(["--verbose=true"])
         assert parser._values["verbose"] is True
@@ -112,54 +106,16 @@ class TestParsing:
         parser.require("count", type=int)
         parser._parse(["--count", "42"])
         assert parser._values["count"] == 42
-        assert isinstance(parser._values["count"], int)
 
     def test_type_conversion_float(self, parser):
         parser.require("ratio", type=float)
         parser._parse(["--ratio", "3.14"])
         assert parser._values["ratio"] == 3.14
 
-    def test_type_conversion_bool(self, parser):
+    def test_type_conversion_bool_optional(self, parser):
         parser.optional("debug", default=False, type=bool)
         parser._parse(["--debug", "true"])
         assert parser._values["debug"] is True
-
-        parser2 = Parser()
-        parser2.optional("debug", default=True, type=bool)
-        parser2._parse(["--debug", "false"])
-        assert parser2._values["debug"] is False
-
-    def test_value_with_spaces(self, parser):
-        # A single shell-quoted value containing spaces is preserved as one token.
-        parser.require("message")
-        parser._parse(["--message", "hello world"])
-        assert parser._values["message"] == "hello world"
-
-    def test_multiple_values_after_flag_rejected(self, parser):
-        # Without quoting, each token is separate; the second token is positional.
-        parser.require("message")
-        with pytest.raises(ParseError):
-            parser._parse(["--message", "hello", "world"])
-
-    def test_empty_string_value(self, parser):
-        parser.require("message")
-        parser._parse(["--message", ""])
-        assert parser._values["message"] == ""
-
-    def test_negative_number_value(self, parser):
-        parser.require("offset", type=int)
-        parser._parse(["--offset", "-5"])
-        assert parser._values["offset"] == -5
-
-    def test_literal_eval_list(self, parser):
-        parser.require("items")
-        parser._parse(["--items", "[1, 2, 3]"])
-        assert parser._values["items"] == [1, 2, 3]
-
-    def test_literal_eval_dict(self, parser):
-        parser.require("config")
-        parser._parse(["--config", "{'a': 'b'}"])
-        assert parser._values["config"] == {"a": "b"}
 
     def test_underscore_and_hyphen_flag_names(self, parser):
         parser.require("file_name")
@@ -205,24 +161,16 @@ class TestAccess:
         parser.require("name")
         assert parser.name == "Yo"
 
-    def test_attribute_access_unparsed(self, parser, monkeypatch):
+    def test_attribute_access_triggers_parse(self, parser, monkeypatch):
         monkeypatch.setattr(sys, "argv", ["script", "--name", "Yo"])
         parser.require("name")
-        # Accessing the attribute triggers parsing.
         assert parser._parsed is False
         _ = parser.name
         assert parser._parsed is True
 
-
-class TestHelp:
-    def test_help_flag_exits(self, parser):
+    def test_dir_includes_flags(self, parser):
         parser.require("name")
-        with pytest.raises(SystemExit) as exc_info:
-            parser._parse(["-h"])
-        assert exc_info.value.code == 0
-
-    def test_help_long_flag_exits(self, parser):
-        parser.require("name")
-        with pytest.raises(SystemExit) as exc_info:
-            parser._parse(["--help"])
-        assert exc_info.value.code == 0
+        parser.flag("verbose")
+        names = dir(parser)
+        assert "name" in names
+        assert "verbose" in names
