@@ -12,6 +12,7 @@ def render(flags: dict[str, Flag]) -> None:
     table.add_column("Variable type")
     table.add_column("Default")
     table.add_column("Required")
+    table.add_column("Description")
 
     for name, flag in flags.items():
         short = f"-{flag.short}" if flag.short else ""
@@ -21,6 +22,7 @@ def render(flags: dict[str, Flag]) -> None:
             flag.type.__name__ if flag.type else "inferred",
             str(flag.default),
             "yes" if flag.required else "no",
+            flag.help or "",
         )
 
     console = Console()

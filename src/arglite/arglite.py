@@ -4,6 +4,7 @@ from typing import Any, Callable, Optional
 
 from rich.console import Console
 
+from .config import load_yaml
 from .exceptions import ParseError, RequirementError
 from .flag import Flag
 from . import help as help_module
@@ -11,14 +12,76 @@ from . import parse
 
 
 class Parser:
-    """A lightweight, explicit CLI argument parser."""
+    """A lightweight, explicit CLI argument parser.
+
+    Flags are declared with `require()`, `optional()`, or `flag()`. Values are
+    accessed as attributes on the parser instance. Parsing happens lazily the
+    first time a declared flag is accessed.
+
+    If a `.arglite.yaml` file exists in the current working directory, it is
+    loaded automatically. Use `load()` to load a different YAML file explicitly.
+    """
 
     _VALID_FLAG_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_\-]*$")
+    _DEFAULT_CONFIG = ".arglite.yaml"
 
     def __init__(self):
         self._flags: dict[str, Flag] = {}
+        self._python_flags: set[str] = set()
+        self._yaml_flags: set[str] = set()
         self._values: dict[str, Any] = {}
         self._parsed = False
+        self._load_yaml(self._DEFAULT_CONFIG, optional=True)
+
+    def load(self, path: str = _DEFAULT_CONFIG) -> "Parser":
+        """Load flag declarations from a YAML file.
+
+        This replaces any previously loaded YAML-backed declarations while
+        preserving flags declared in Python code.
+
+        Args:
+            path: Path to the YAML config file. Defaults to `.arglite.yaml`.
+
+        Returns:
+            The parser instance, for chaining.
+        """
+        self._load_yaml(path, optional=False)
+        return self
+
+    def _load_yaml(self, path: str, optional: bool) -> None:
+        """Load declarations from a YAML file and merge them."""
+        # Remove flags from the previous YAML load that are not also declared
+        # in Python. This makes explicit load() calls replace earlier config.
+        for name in self._yaml_flags:
+            if name not in self._python_flags:
+                del self._flags[name]
+        self._yaml_flags.clear()
+
+        yaml_flags = load_yaml(path, optional=optional)
+        for name, flag in yaml_flags.items():
+            self._yaml_flags.add(name)
+            if name in self._flags:
+                # Python declarations already exist; merge YAML metadata only.
+                existing = self._flags[name]
+                existing.help = flag.help if flag.help is not None else existing.help
+                existing.choices = (
+                    flag.choices if flag.choices is not None else existing.choices
+                )
+                # Only set short alias from YAML if Python did not specify one
+                # and the candidate short alias is not already in use.
+                if existing.short is None and flag.short is not None:
+                    if not any(
+                        f.short == flag.short
+                        for f in self._flags.values()
+                        if f.name != name
+                    ):
+                        existing.short = flag.short
+                continue
+
+            # No Python declaration exists; adopt the YAML declaration directly.
+            resolved_short = self._resolve_short(name, flag.short)
+            flag.short = resolved_short
+            self._flags[name] = flag
 
     def require(
         self,
@@ -26,7 +89,16 @@ class Parser:
         short: Optional[str] = None,
         type: Optional[Callable[[str], Any]] = None,
     ) -> "Parser":
-        """Declare a required flag."""
+        """Declare a required flag.
+
+        Args:
+            name: The flag name. Will be accessed as `parser.name`.
+            short: Optional single-letter short alias.
+            type: Callable to convert the raw string value.
+
+        Returns:
+            The parser instance, for chaining.
+        """
         self._declare(name, short=short, required=True, default=None, type=type)
         return self
 
@@ -37,12 +109,30 @@ class Parser:
         default: Any = None,
         type: Optional[Callable[[str], Any]] = None,
     ) -> "Parser":
-        """Declare an optional flag with an optional default value."""
+        """Declare an optional flag with an optional default value.
+
+        Args:
+            name: The flag name. Will be accessed as `parser.name`.
+            short: Optional single-letter short alias.
+            default: Value returned when the flag is not provided.
+            type: Callable to convert the raw string value.
+
+        Returns:
+            The parser instance, for chaining.
+        """
         self._declare(name, short=short, required=False, default=default, type=type)
         return self
 
     def flag(self, name: str, short: Optional[str] = None) -> "Parser":
-        """Declare a boolean flag (True if present, False otherwise)."""
+        """Declare a boolean flag (True if present, False otherwise).
+
+        Args:
+            name: The flag name. Will be accessed as `parser.name`.
+            short: Optional single-letter short alias.
+
+        Returns:
+            The parser instance, for chaining.
+        """
         self._declare(
             name, short=short, required=False, default=False, type=bool, is_flag=True
         )
@@ -59,10 +149,23 @@ class Parser:
     ) -> None:
         if not isinstance(name, str) or not self._VALID_FLAG_NAME.match(name):
             raise ValueError(f"Invalid flag name: {name!r}")
-        if name in self._flags:
+        if name in self._python_flags:
             raise ValueError(f"Flag already declared: {name!r}")
 
         resolved_short = self._resolve_short(name, short)
+        self._python_flags.add(name)
+
+        if name in self._flags:
+            # A YAML declaration already exists; Python wins for behavior, but
+            # keep YAML metadata like help and choices.
+            existing = self._flags[name]
+            existing.required = required
+            existing.default = default
+            existing.type = type
+            existing.is_flag = is_flag
+            existing.short = resolved_short
+            return
+
         self._flags[name] = Flag(
             name,
             short=resolved_short,
@@ -127,7 +230,9 @@ class Parser:
                         raise ParseError(
                             f"ERROR: --{name} was provided without a value"
                         )
-                    self._values[name] = flag.convert(values[-1])
+                    converted = flag.convert(values[-1])
+                    self._validate_choice(flag, converted)
+                    self._values[name] = converted
             else:
                 if flag.required:
                     raise RequirementError(
@@ -136,6 +241,15 @@ class Parser:
                 self._values[name] = flag.default
 
         self._parsed = True
+
+    def _validate_choice(self, flag: Flag, value: Any) -> None:
+        """Validate a converted value against declared choices."""
+        if flag.choices is not None and value not in flag.choices:
+            choices = ", ".join(str(c) for c in flag.choices)
+            raise ParseError(
+                f"ERROR: Value for --{flag.name} must be one of: {choices}; "
+                f"got {value!r}"
+            )
 
     def _show_help(self) -> None:
         """Print help and exit cleanly."""

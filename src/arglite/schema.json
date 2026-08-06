@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "arglite configuration schema",
+  "description": "Lenient schema for .arglite.yaml files.",
+  "type": "object",
+  "properties": {
+    "flags": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["str", "int", "float", "bool"]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "default": {},
+          "action": {
+            "type": "string",
+            "enum": ["store_true", "store_false"]
+          },
+          "help": {
+            "type": "string"
+          },
+          "choices": {
+            "type": "array"
+          },
+          "short": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

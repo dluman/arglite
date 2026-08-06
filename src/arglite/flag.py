@@ -5,7 +5,18 @@ from .exceptions import ParseError
 
 
 class Flag:
-    """Descriptor for a declared CLI flag."""
+    """Metadata and conversion logic for a declared CLI flag.
+
+    Attributes:
+        name: The flag name.
+        short: Optional single-letter short alias.
+        required: Whether the flag must be provided.
+        default: Value used when the flag is absent.
+        type: Callable used to convert the raw string value.
+        is_flag: Whether this flag is a boolean presence flag.
+        help: Description shown in the help table.
+        choices: Optional list of allowed values.
+    """
 
     def __init__(
         self,
@@ -15,6 +26,8 @@ class Flag:
         default: Any = None,
         type: Optional[Callable[[str], Any]] = None,
         is_flag: bool = False,
+        help: Optional[str] = None,
+        choices: Optional[list] = None,
     ):
         self.name = name
         self.short = short
@@ -22,6 +35,8 @@ class Flag:
         self.default = default
         self.type = type
         self.is_flag = is_flag
+        self.help = help
+        self.choices = choices
 
     @property
     def expects_value(self) -> bool:
@@ -29,7 +44,17 @@ class Flag:
         return not self.is_flag
 
     def convert(self, value: str) -> Any:
-        """Convert a raw string value to the declared type."""
+        """Convert a raw string value to the declared type.
+
+        Args:
+            value: The raw string from the command line.
+
+        Returns:
+            The converted value.
+
+        Raises:
+            ParseError: If the value cannot be converted.
+        """
         if self.type is not None:
             try:
                 if self.type is bool:
@@ -49,7 +74,11 @@ class Flag:
 
     @staticmethod
     def _boolify(value: str) -> bool:
-        """Convert common string representations to a boolean."""
+        """Convert common string representations to a boolean.
+
+        Recognized true values: `true`, `True`, `1`, `yes`, `on`.
+        Recognized false values: `false`, `False`, `0`, `no`, `off`.
+        """
         if isinstance(value, bool):
             return value
         lowered = str(value).lower()
