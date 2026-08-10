@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.30.5
+
+### Changed
+
+- Updated `uv.lock` to resolve dependency vulnerabilities.
+- Bumped version to 0.30.5.
+
 ## 0.30.0
 
 ### Added
