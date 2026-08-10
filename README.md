@@ -29,6 +29,37 @@ if __name__ == "__main__":
 python main.py --name Yo --count 5 --verbose
 ```
 
+## YAML configuration
+
+You can also declare flags in a `.arglite.yaml` file in the working directory. arglite loads it automatically, or you can point to a different file with `parser.load()`.
+
+```yaml
+flags:
+  name:
+    help: "The user name"
+    type: str
+    required: true
+
+  count:
+    help: "Number of items"
+    type: int
+    default: 1
+
+  verbose:
+    help: "Enable verbose output"
+    action: store_true
+```
+
+```python
+import arglite
+
+print(arglite.parser.name)
+print(arglite.parser.count)
+print(arglite.parser.verbose)
+```
+
+Python declarations override YAML for runtime behavior (`type`, `required`, `default`, `action`), while YAML metadata like `help` and `choices` is merged in.
+
 ## Documentation
 
 Full documentation is available at [arglite.readthedocs.io](https://arglite.readthedocs.io/).
